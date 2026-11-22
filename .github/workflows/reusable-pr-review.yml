@@ -1,0 +1,67 @@
+name: Reusable Codex PR review
+
+on:
+  workflow_call:
+    inputs:
+      pr-url:
+        description: The complete GitHub pull-request URL
+        required: true
+        type: string
+      event-action:
+        description: The triggering pull_request action
+        required: true
+        type: string
+    secrets:
+      OPENAI_API_KEY:
+        required: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install shared review skills
+        uses: pjgrenyer/codex-automation/install-skills@main
+
+      - name: Run initial review
+        if: inputs.event-action != 'synchronize'
+        uses: openai/codex-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          sandbox: workspace-write
+          codex-args: '["--config", "sandbox_workspace_write.network_access=true"]'
+          prompt: |
+            ${{ inputs.pr-url }}
+
+            Use $review-pr to perform the first review of this pull request and
+            publish every verified actionable finding as an inline GitHub review
+            comment. Follow the skill completely.
+
+      - name: Run follow-up review
+        if: inputs.event-action == 'synchronize'
+        uses: openai/codex-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          sandbox: workspace-write
+          codex-args: '["--config", "sandbox_workspace_write.network_access=true"]'
+          prompt: |
+            ${{ inputs.pr-url }}
+
+            Use $re-review-pr to verify the prior review and review subsequent
+            updates to this pull request. Publish only new verified actionable
+            findings as inline GitHub review comments. Follow the skill completely.

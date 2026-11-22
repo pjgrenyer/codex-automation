@@ -1,0 +1,22 @@
+name: Codex PR review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, synchronize]
+
+concurrency:
+  group: codex-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    uses: pjgrenyer/codex-automation/.github/workflows/reusable-pr-review.yml@main
+    with:
+      pr-url: ${{ github.event.pull_request.html_url }}
+      event-action: ${{ github.event.action }}
+    secrets: inherit

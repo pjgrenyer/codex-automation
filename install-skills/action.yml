@@ -1,0 +1,14 @@
+name: Install shared Codex review skills
+description: Installs the review-pr and re-review-pr skills into the caller workspace
+
+runs:
+  using: composite
+  steps:
+    - name: Install skills
+      shell: bash
+      run: |
+        set -euo pipefail
+        skills_dir="$GITHUB_WORKSPACE/.agents/skills"
+        mkdir -p "$skills_dir"
+        cp -R "${{ github.action_path }}/../review-pr" "$skills_dir/review-pr"
+        cp -R "${{ github.action_path }}/../re-review-pr" "$skills_dir/re-review-pr"
