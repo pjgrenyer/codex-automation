@@ -1,23 +1,34 @@
 # Codex automation
 
 Shared Codex skills and a reusable GitHub Actions workflow for pull-request
-reviews across private repositories owned by `pjgrenyer`.
+reviews across repositories owned by `pjgrenyer`.
 
 ## Scope and deliberate limitations
 
-This repository is intentionally private. That is a recorded project decision,
-not a temporary setup state; see
-[`docs/decisions/0001-keep-the-automation-repository-private.md`](docs/decisions/0001-keep-the-automation-repository-private.md).
+This repository is intentionally public so both public and private repositories
+can call its reusable workflow. It contains no API keys or caller secrets. The
+visibility and governance decision is recorded in
+[`docs/decisions/0002-publish-read-only-automation.md`](docs/decisions/0002-publish-read-only-automation.md),
+which supersedes the earlier private-only decision.
 
 Consequences:
 
-- Only private repositories owned by `pjgrenyer` can call this reusable
-  workflow.
-- Public repositories cannot use it while this repository remains private.
-- GitHub Actions access is enabled for private repositories owned by
-  `pjgrenyer`.
+- Public and private repositories can call this reusable workflow.
+- Everyone can read, clone, and fork this repository, but only `pjgrenyer` has
+  write access to the upstream repository.
+- External contributors may propose changes from forks, but cannot merge or
+  push them to the upstream repository.
 - Callers reference `main` deliberately, so a change merged here becomes
   available to every caller without updating each caller workflow.
+
+## Repository governance
+
+- The collaborator list is empty; only the repository owner can write.
+- `main` is protected against force-pushes and deletion, including by the
+  repository administrator.
+- Issues, Discussions, Projects, and the wiki are disabled.
+- Pull requests from forks remain possible, but only the owner can merge them.
+- Secrets are stored in calling repositories, never in this repository.
 
 ## What it provides
 
@@ -38,10 +49,10 @@ the pull-request branch, runs the follow-up review.
 
 Before enabling the workflow, confirm that:
 
-1. The repository is private and owned by `pjgrenyer`.
+1. The repository is owned by `pjgrenyer`; it may be public or private.
 2. GitHub Actions is enabled in the repository.
-3. The repository permits `actions/checkout`, `openai/codex-action`, and
-   reusable workflows from private repositories owned by `pjgrenyer`.
+3. The repository permits `actions/checkout`, `openai/codex-action`, and this
+   public reusable workflow.
 4. OpenAI API billing is configured. ChatGPT and API Platform billing are
    separate.
 5. The repository has an Actions secret named `OPENAI_API_KEY`, as described
@@ -80,7 +91,7 @@ called by another repository.
 
 ### GitHub web interface
 
-For each private repository that should use automated review:
+For each repository that should use automated review:
 
 1. Open the repository on GitHub.
 2. Select **Settings**.
@@ -101,7 +112,7 @@ printf '%s' "$OPENAI_REVIEW_KEY" |
 unset OPENAI_REVIEW_KEY
 ```
 
-Replace `REPOSITORY_NAME` with the private repository name. Verify that the
+Replace `REPOSITORY_NAME` with the repository name. Verify that the
 secret exists without revealing its value:
 
 ```bash
@@ -125,7 +136,7 @@ across every repository without reviewing the intended scope.
 
 ## Install the caller workflow
 
-Create `.github/workflows/codex-review.yml` in the private target repository:
+Create `.github/workflows/codex-review.yml` in the target repository:
 
 ```yaml
 name: Codex PR review
@@ -197,10 +208,10 @@ nothing when no verified actionable finding survives review.
 
 ### The reusable workflow cannot be found
 
-- Confirm that the caller is a private repository owned by `pjgrenyer`.
 - Confirm that it references
   `pjgrenyer/codex-automation/.github/workflows/reusable-pr-review.yml@main`.
-- Public repositories cannot call this private workflow by design.
+- Confirm that the caller's Actions policy permits public reusable workflows,
+  `actions/checkout`, and `openai/codex-action`.
 
 ### `OPENAI_API_KEY` is missing
 

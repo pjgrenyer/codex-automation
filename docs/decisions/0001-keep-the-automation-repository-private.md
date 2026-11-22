@@ -1,6 +1,6 @@
 # Decision 0001: Keep the automation repository private
 
-- Status: accepted
+- Status: superseded by [Decision 0002](0002-publish-read-only-automation.md)
 - Date: 2026-11-22
 
 ## Context
